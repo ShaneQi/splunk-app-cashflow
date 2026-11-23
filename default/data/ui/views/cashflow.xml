@@ -9,10 +9,27 @@
     <panel>
       <chart>
         <title>Cashflow by Cycle by InOut in the last 13 cycles</title>
-        <search ref="Cashflow by Cycle by InOut in the last 13 cycles"></search>
-        <option name="charting.axisY.maximumNumber">25000</option>
-        <option name="charting.axisY.minimumNumber">10000</option>
+        <search>
+          <query>index="cashflow-1.1"
+| where Cycle &gt;= strftime(now() - 3600 * 24 * (365 + 31), "%y%m")
+| lookup Constant-Routes.csv Route OUTPUT Cash as is_cash | where is_cash="TRUE"
+| lookup Constant-Categories.csv Category OUTPUT InOut AS in_out
+| eval InOut = if(isNull(in_out), if(Amount&gt;0, "IN", "OUT"), in_out)
+| eval adjustedAmount = if(InOut="OUT", -Amount, Amount)
+| chart sum(adjustedAmount) as SubTotal by Cycle, InOut | sort Cycle</query>
+          <earliest>0</earliest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisY.abbreviation">auto</option>
+        <option name="charting.axisY.maximumNumber">50000</option>
+        <option name="charting.axisY.minimumNumber">0</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.overlayFields">OUT</option>
+        <option name="charting.chart.showDataLabels">all</option>
         <option name="charting.drilldown">all</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="height">290</option>
         <drilldown>
           <set token="cycle">$click.value$</set>
           <set token="inOut">ALL</set>
@@ -26,7 +43,14 @@
       <chart>
         <title>Cashflow in OUT in $cycle$ by Category</title>
         <search>
-          <query>| savedsearch "Cashflow in [inOut] in [cycle] by Category" cycle=$cycle$ inOut="OUT"</query>
+          <query>index="cashflow-1.1"
+| where Cycle="$cycle$"
+| lookup Constant-Routes.csv Route OUTPUT Cash as is_cash | where is_cash="TRUE"
+| lookup Constant-Categories.csv Category OUTPUT InOut AS in_out
+| eval InOut = if(isNull(in_out), "ERR", in_out)
+| where InOut="OUT"
+| eval adjustedAmount = -Amount
+| chart sum(adjustedAmount) as SubTotal by Category | sort SubTotal DESC</query>
           <earliest>0</earliest>
           <sampleRatio>1</sampleRatio>
         </search>
@@ -46,7 +70,14 @@
       <table>
         <title>Cashflow in OUT in $cycle$ by Category</title>
         <search>
-          <query>| savedsearch "Cashflow in [inOut] in [cycle] by Category" cycle=$cycle$ inOut="OUT"</query>
+          <query>index="cashflow-1.1"
+| where Cycle="$cycle$"
+| lookup Constant-Routes.csv Route OUTPUT Cash as is_cash | where is_cash="TRUE"
+| lookup Constant-Categories.csv Category OUTPUT InOut AS in_out
+| eval InOut = if(isNull(in_out), "ERR", in_out)
+| where InOut="OUT"
+| eval adjustedAmount = -Amount
+| chart sum(adjustedAmount) as SubTotal by Category | sort SubTotal DESC</query>
           <earliest>0</earliest>
           <sampleRatio>1</sampleRatio>
         </search>
@@ -62,7 +93,13 @@
       <chart>
         <title>Cashflow in IN in $cycle$ by Category</title>
         <search>
-          <query>| savedsearch "Cashflow in [inOut] in [cycle] by Category" cycle=$cycle$ inOut="IN"</query>
+          <query>index="cashflow-1.1"
+| where Cycle="$cycle$"
+| lookup Constant-Routes.csv Route OUTPUT Cash as is_cash | where is_cash="TRUE"
+| lookup Constant-Categories.csv Category OUTPUT InOut AS in_out
+| eval InOut = if(isNull(in_out), "ERR", in_out)
+| where InOut="IN"
+| chart sum(Amount) as SubTotal by Category | sort SubTotal DESC</query>
           <earliest>0</earliest>
           <sampleRatio>1</sampleRatio>
         </search>
@@ -82,7 +119,13 @@
       <table>
         <title>Cashflow in IN in $cycle$ by Category</title>
         <search>
-          <query>| savedsearch "Cashflow in [inOut] in [cycle] by Category" cycle=$cycle$ inOut="IN"</query>
+          <query>index="cashflow-1.1"
+| where Cycle="$cycle$"
+| lookup Constant-Routes.csv Route OUTPUT Cash as is_cash | where is_cash="TRUE"
+| lookup Constant-Categories.csv Category OUTPUT InOut AS in_out
+| eval InOut = if(isNull(in_out), "ERR", in_out)
+| where InOut="IN"
+| chart sum(Amount) as SubTotal by Category | sort SubTotal DESC</query>
           <earliest>0</earliest>
           <sampleRatio>1</sampleRatio>
         </search>
@@ -100,7 +143,15 @@
       <table>
         <title>Cashflow in $category$ in $inOut$ in $cycle$</title>
         <search>
-          <query>| savedsearch "Cashflow in [category] in [inOut] in [cycle]" cycle=$cycle$ category="$category$" inOut="$inOut$"</query>
+          <query>index="cashflow-1.1"
+| where Cycle="$cycle$"
+| lookup Constant-Routes.csv Route OUTPUT Cash as is_cash | where is_cash="TRUE"
+| where ("$category$" = "ALL") OR ("$category$" = Category)
+| lookup Constant-Categories.csv Category OUTPUT InOut AS in_out
+| eval InOut = if(isNull(in_out), "ERR", in_out)
+| where ("$inOut$" = "ALL") OR ("$inOut$" = InOut)
+| eval FDate = strftime(strptime('Date', "%m/%d/%y"), "%m/%d/%y")
+| table FDate Amount, Description, Category, Route, Memo, Cycle, InOut | sort FDate</query>
           <earliest>0</earliest>
           <sampleRatio>1</sampleRatio>
         </search>

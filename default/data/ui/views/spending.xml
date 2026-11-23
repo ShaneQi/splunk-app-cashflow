@@ -7,13 +7,77 @@
   <row>
     <panel>
       <chart>
-        <title>Spending by Cycle by Flex in the last 13 cycles</title>
-        <search ref="Spending by Cycle by Flex in the last 13 cycles"></search>
-        <option name="charting.chart.stackMode">stacked</option>
+        <title>Flex Spending by Cycle in the last 13 cycles</title>
+        <search>
+          <query>index="cashflow-1.1"
+                  | where Cycle &gt;= strftime(now() - 3600 * 24 * (365 + 31), "%y%m")
+                  | lookup Constant-Categories.csv Category OUTPUT Spending as spending, FlexSpending as flex
+                  | where spending="TRUE"
+                  | where flex = "TRUE"
+                  | eval adjustedAmount = -Amount
+                  | chart sum(adjustedAmount) as SubTotal by Cycle
+                  | sort Cycle
+                  | eventstats median(SubTotal) as Median</query>
+          <earliest>0</earliest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <!--<search ref="Spending by Cycle by Flex in the last 13 cycles"></search>-->
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisY.maximumNumber">10000</option>
+        <option name="charting.axisY.minimumNumber">0</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.overlayFields">Median</option>
+        <option name="charting.chart.showDataLabels">all</option>
+        <option name="charting.chart.stackMode">default</option>
         <option name="charting.drilldown">all</option>
+        <option name="charting.layout.splitSeries">0</option>
         <option name="charting.legend.labelStyle.overflowMode">ellipsisEnd</option>
         <option name="charting.legend.mode">standard</option>
-        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="charting.seriesColors">[0xffff00]</option>
+        <drilldown>
+          <set token="cycle">$click.value$</set>
+          <set token="category">ALL</set>
+        </drilldown>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Non-Flex Spending by Cycle in the last 13 cycles</title>
+        <search>
+          <query>
+            index="cashflow-1.1"
+              | where Cycle &gt;= strftime(now() - 3600 * 24 * (365 + 31), "%y%m")
+              | lookup Constant-Categories.csv Category OUTPUT Spending as spending, FlexSpending as flex
+              | where spending="TRUE"
+              | where NOT flex = "TRUE"
+              | eval adjustedAmount = -Amount
+              | chart sum(adjustedAmount) as SubTotal by Cycle
+              | sort Cycle
+          </query>
+          <earliest>0</earliest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <!--<search ref="Spending by Cycle by Flex in the last 13 cycles"></search>-->
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisY.maximumNumber">50000</option>
+        <option name="charting.axisY.minimumNumber">0</option>
+        <option name="charting.axisY2.abbreviation">none</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.overlayFields">stdev,stdev_6m</option>
+        <option name="charting.chart.showDataLabels">all</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisEnd</option>
+        <option name="charting.legend.mode">standard</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="charting.seriesColors">[0xaaaaaa]</option>
         <drilldown>
           <set token="cycle">$click.value$</set>
           <set token="category">ALL</set>
@@ -26,11 +90,289 @@
       <chart>
         <title>COL by Cycle by Category in the last 13 cycles</title>
         <search ref="COL by Cycle by Category in the last 13 cycles"></search>
+        <option name="charting.chart.stackMode">stacked</option>
         <option name="charting.drilldown">all</option>
         <option name="charting.legend.placement">bottom</option>
         <drilldown>
           <set token="cycle">$click.value$</set>
           <set token="category">ALL</set>
+        </drilldown>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Cate Trends Group 1</title>
+        <search>
+          <query>
+              index="cashflow-1.1"
+              | where Cycle &gt;= strftime(now() - 3600 * 24 * (365 + 31), "%y%m")
+              | lookup Constant-Categories.csv Category OUTPUT Spending as spending
+              | where spending = "TRUE"
+              | eval adjustedAmount = -Amount
+              | stats sum(adjustedAmount) as SubTotal by Cycle, Category
+              | eventstats median(SubTotal) as cat_median by Category
+              | sort 0 -cat_median, Category, Cycle
+              | streamstats dc(Category) as cat_num
+              | eval group = ceil(cat_num / 5)
+              | where group = 1
+              | fields - cat_median, cat_num, group
+              | xyseries Cycle Category SubTotal
+              | sort Cycle
+          </query>
+          <earliest>0</earliest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.visibility">collapsed</option>
+        <option name="charting.axisY.maximumNumber">5000</option>
+        <option name="charting.axisY.minimumNumber">0</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.nullValueMode">zero</option>
+        <option name="charting.chart.showDataLabels">all</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.legend.placement">bottom</option>
+        <drilldown>
+          <set token="cycle">$click.value$</set>
+          <set token="category">$click.name2$</set>
+        </drilldown>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Cate Trends Group 2</title>
+        <search>
+          <query>
+              index="cashflow-1.1"
+              | where Cycle &gt;= strftime(now() - 3600 * 24 * (365 + 31), "%y%m")
+              | lookup Constant-Categories.csv Category OUTPUT Spending as spending
+              | where spending = "TRUE"
+              | eval adjustedAmount = -Amount
+              | stats sum(adjustedAmount) as SubTotal by Cycle, Category
+              | eventstats median(SubTotal) as cat_median by Category
+              | sort 0 -cat_median, Category, Cycle
+              | streamstats dc(Category) as cat_num
+              | eval group = ceil(cat_num / 5)
+              | where group = 2
+              | fields - cat_median, cat_num, group
+              | xyseries Cycle Category SubTotal
+              | sort Cycle
+          </query>
+          <earliest>0</earliest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.visibility">collapsed</option>
+        <option name="charting.axisY.maximumNumber">3000</option>
+        <option name="charting.axisY.minimumNumber">0</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.nullValueMode">zero</option>
+        <option name="charting.chart.showDataLabels">all</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.legend.placement">bottom</option>
+        <drilldown>
+          <set token="cycle">$click.value$</set>
+          <set token="category">$click.name2$</set>
+        </drilldown>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Cate Trends Group 3</title>
+        <search>
+          <query>
+              index="cashflow-1.1"
+              | where Cycle &gt;= strftime(now() - 3600 * 24 * (365 + 31), "%y%m")
+              | lookup Constant-Categories.csv Category OUTPUT Spending as spending
+              | where spending = "TRUE"
+              | eval adjustedAmount = -Amount
+              | stats sum(adjustedAmount) as SubTotal by Cycle, Category
+              | eventstats median(SubTotal) as cat_median by Category
+              | sort 0 -cat_median, Category, Cycle
+              | streamstats dc(Category) as cat_num
+              | eval group = ceil(cat_num / 5)
+              | where group = 3
+              | fields - cat_median, cat_num, group
+              | xyseries Cycle Category SubTotal
+              | sort Cycle
+          </query>
+          <earliest>0</earliest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.visibility">collapsed</option>
+        <option name="charting.axisY.maximumNumber">2000</option>
+        <option name="charting.axisY.minimumNumber">0</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.nullValueMode">zero</option>
+        <option name="charting.chart.showDataLabels">all</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.legend.placement">bottom</option>
+        <drilldown>
+          <set token="cycle">$click.value$</set>
+          <set token="category">$click.name2$</set>
+        </drilldown>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Cate Trends Group 4</title>
+        <search>
+          <query>
+              index="cashflow-1.1"
+              | where Cycle &gt;= strftime(now() - 3600 * 24 * (365 + 31), "%y%m")
+              | lookup Constant-Categories.csv Category OUTPUT Spending as spending
+              | where spending = "TRUE"
+              | eval adjustedAmount = -Amount
+              | stats sum(adjustedAmount) as SubTotal by Cycle, Category
+              | eventstats median(SubTotal) as cat_median by Category
+              | sort 0 -cat_median, Category, Cycle
+              | streamstats dc(Category) as cat_num
+              | eval group = ceil(cat_num / 5)
+              | where group = 4
+              | fields - cat_median, cat_num, group
+              | xyseries Cycle Category SubTotal
+              | sort Cycle
+          </query>
+          <earliest>0</earliest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.visibility">collapsed</option>
+        <option name="charting.axisY.maximumNumber">2000</option>
+        <option name="charting.axisY.minimumNumber">0</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.nullValueMode">zero</option>
+        <option name="charting.chart.showDataLabels">all</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.legend.placement">bottom</option>
+        <drilldown>
+          <set token="cycle">$click.value$</set>
+          <set token="category">$click.name2$</set>
+        </drilldown>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Cate Trends Group 5</title>
+        <search>
+          <query>
+              index="cashflow-1.1"
+              | where Cycle &gt;= strftime(now() - 3600 * 24 * (365 + 31), "%y%m")
+              | lookup Constant-Categories.csv Category OUTPUT Spending as spending
+              | where spending = "TRUE"
+              | eval adjustedAmount = -Amount
+              | stats sum(adjustedAmount) as SubTotal by Cycle, Category
+              | eventstats median(SubTotal) as cat_median by Category
+              | sort 0 -cat_median, Category, Cycle
+              | streamstats dc(Category) as cat_num
+              | eval group = ceil(cat_num / 5)
+              | where group = 5
+              | fields - cat_median, cat_num, group
+              | xyseries Cycle Category SubTotal
+              | sort Cycle
+          </query>
+          <earliest>0</earliest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.visibility">collapsed</option>
+        <option name="charting.axisY.maximumNumber">2000</option>
+        <option name="charting.axisY.minimumNumber">0</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.nullValueMode">zero</option>
+        <option name="charting.chart.showDataLabels">all</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.legend.placement">bottom</option>
+        <drilldown>
+          <set token="cycle">$click.value$</set>
+          <set token="category">$click.name2$</set>
+        </drilldown>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Cate Trends Group 6</title>
+        <search>
+          <query>
+              index="cashflow-1.1"
+              | where Cycle &gt;= strftime(now() - 3600 * 24 * (365 + 31), "%y%m")
+              | lookup Constant-Categories.csv Category OUTPUT Spending as spending
+              | where spending = "TRUE"
+              | eval adjustedAmount = -Amount
+              | stats sum(adjustedAmount) as SubTotal by Cycle, Category
+              | eventstats median(SubTotal) as cat_median by Category
+              | sort 0 -cat_median, Category, Cycle
+              | streamstats dc(Category) as cat_num
+              | eval group = ceil(cat_num / 5)
+              | where group = 6
+              | fields - cat_median, cat_num, group
+              | xyseries Cycle Category SubTotal
+              | sort Cycle
+          </query>
+          <earliest>0</earliest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.visibility">collapsed</option>
+        <option name="charting.axisY.maximumNumber">2000</option>
+        <option name="charting.axisY.minimumNumber">0</option>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.nullValueMode">zero</option>
+        <option name="charting.chart.showDataLabels">all</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.legend.placement">bottom</option>
+        <drilldown>
+          <set token="cycle">$click.value$</set>
+          <set token="category">$click.name2$</set>
+        </drilldown>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Trends by Category: $category$</title>
+        <search>
+          <query>index="cashflow-1.1"
+          | where Cycle &gt;= strftime(now() - 3600 * 24 * (365 + 31), "%y%m") 
+          | lookup Constant-Categories.csv Category OUTPUT Spending as spending
+          | where spending = "TRUE"
+          | where Category = "$category$" or "ALL" = "$category$"
+          | eval adjustedAmount = -Amount 
+          | chart sum(adjustedAmount) as SubTotal by Cycle 
+          | sort Cycle
+          | eventstats median(SubTotal) as Median</query>
+          <earliest>0</earliest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.visibility">collapsed</option>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.overlayFields">Median</option>
+        <option name="charting.chart.showDataLabels">all</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.legend.placement">none</option>
+        <drilldown>
+          <set token="cycle">$click.value$</set>
         </drilldown>
       </chart>
     </panel>
@@ -120,6 +462,40 @@
         <option name="rowNumbers">true</option>
         <option name="totalsRow">true</option>
         <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Average Spending per Cycle by Category in the last 13 cycles</title>
+        <search>
+          <query>
+              index="cashflow-1.1"
+              | where Cycle &gt;= strftime(now() - 3600 * 24 * (365 + 31), "%y%m")
+              | lookup Constant-Categories.csv Category OUTPUT Spending as spending
+              | where spending = "TRUE"
+              | eval adjustedAmount = -Amount
+              | eventstats dc(Cycle) as n_cycles
+              | stats sum(adjustedAmount) as Total dc(Cycle) as Cycles max(n_cycles) as n_cycles by Category
+              | append [| inputlookup Constant-Categories.csv | where Spending = "TRUE" | fields Category]
+              | eventstats max(n_cycles) as n_cycles
+              | stats sum(Total) as Total max(Cycles) as Cycles max(n_cycles) as n_cycles by Category
+              | fillnull value=0 Total Cycles
+              | eval "Avg per Cycle" = round(Total / n_cycles, 2), "13-Cycle Total" = round(Total, 2)
+              | rename Cycles as "Cycles with Spending"
+              | sort 0 - "Avg per Cycle"
+              | table Category, "Avg per Cycle", "13-Cycle Total", "Cycles with Spending"
+              | addcoltotals labelfield=Category label="TOTAL" "Avg per Cycle" "13-Cycle Total"
+          </query>
+          <earliest>0</earliest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="drilldown">row</option>
+        <drilldown>
+          <set token="category">$click.value$</set>
+        </drilldown>
       </table>
     </panel>
   </row>

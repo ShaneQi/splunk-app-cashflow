@@ -30,22 +30,11 @@ owner = admin
 version = 8.0.3
 modtime = 1622620649.685895000
 
-[views/budget]
-owner = admin
-version = 8.0.3
-modtime = 1708709528.903453000
-
 [savedsearches/COL%20by%20Cycle%20by%20Category%20in%20the%20last%2013%20cycles]
 export = none
 owner = admin
 version = 8.0.3
 modtime = 1626147425.473995000
-
-[savedsearches/in%20%5Bcategory%5D%20in%20%5BinOut%5D%20in%20%5Bcycle%5D]
-export = none
-owner = admin
-version = 8.0.3
-modtime = 1626147429.468247000
 
 [savedsearches/Spending%20in%20%5Bcategory%5D%20in%20%5Bcycle%5D]
 export = none
@@ -59,24 +48,6 @@ owner = admin
 version = 8.0.3
 modtime = 1680503797.468624000
 
-[savedsearches/Cashflow%20in%20%5BinOut%5D%20in%20%5Bcycle%5D%20by%20Category]
-export = none
-owner = admin
-version = 8.0.3
-modtime = 1626147455.648473000
-
-[savedsearches/Cashflow%20in%20%5Bcategory%5D%20in%20%5BinOut%5D%20in%20%5Bcycle%5D]
-export = none
-owner = admin
-version = 8.0.3
-modtime = 1628737883.052669000
-
-[savedsearches/Cashflow%20by%20Cycle%20by%20InOut%20in%20the%20last%2013%20cycles]
-export = none
-owner = admin
-version = 8.0.3
-modtime = 1626147462.225278000
-
 [savedsearches/Spending%20in%20%5Bcycle%5D%20in%20%5Bflex%5D%20by%20Category]
 access = read : [ * ], write : [ admin, power ]
 export = none
@@ -84,23 +55,3 @@ owner = admin
 version = 8.0.3
 modtime = 1680561768.049753000
 
-[savedsearches/in%20%5Bcategory%5D%20in%20%5Byear%5D%20Total]
-access = read : [ * ], write : [ admin, power ]
-export = none
-owner = admin
-version = 8.0.3
-modtime = 1708709346.274295000
-
-[savedsearches/in%20%5Bcategory%5D%20in%20%5Byear%5D%20by%20Cycle]
-access = read : [ * ], write : [ admin, power ]
-export = none
-owner = admin
-version = 8.0.3
-modtime = 1708709357.442338000
-
-[savedsearches/in%20%5Bcategory%5D%20in%20%5Bcycle%5D]
-access = read : [ * ], write : [ admin, power ]
-export = none
-owner = admin
-version = 8.0.3
-modtime = 1708709327.982648000

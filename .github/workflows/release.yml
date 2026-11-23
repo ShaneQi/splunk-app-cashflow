@@ -1,0 +1,47 @@
+name: Release
+
+# Pushing a version tag (e.g. 1.1.8) publishes a GitHub release with src.tar.
+# Run manually with a tag to (re)publish an existing tag.
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to release (e.g. 1.1.7)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+          fetch-depth: 0
+
+      - name: Check app.conf version matches tag
+        run: |
+          version=$(sed -n 's/^version = //p' default/app.conf)
+          if [ "$version" != "$TAG" ]; then
+            echo "::error file=default/app.conf::version is '$version' but tag is '$TAG'"
+            exit 1
+          fi
+
+      - name: Build src.tar
+        run: git archive --format=tar --prefix="splunk-app-cashflow-$TAG/" "$TAG" | gzip -n > src.tar
+
+      - name: Publish release and upload src.tar
+        run: |
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" src.tar --clobber
+          else
+            gh release create "$TAG" src.tar --title "$TAG" --generate-notes --verify-tag
+          fi
